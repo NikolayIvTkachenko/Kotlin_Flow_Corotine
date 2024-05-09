@@ -22,6 +22,10 @@ var counter = 0
 
 fun main(args: Array<String>) = runBlocking {
 
+    FlowTest01.mainTest()
+
+
+
     //testApp02(args)
     //testApp03(args)
     //testApp05(args)
@@ -33,10 +37,16 @@ fun main(args: Array<String>) = runBlocking {
     //testApp11(args)
     //testApp13(args)
     //testApp15(args)
-    testApp16(args)
+    //testApp16(args)
 
 
 }
+
+
+
+
+
+
 
 //Защита от многопоточности
 val contextV2 = newSingleThreadContext("counter")
