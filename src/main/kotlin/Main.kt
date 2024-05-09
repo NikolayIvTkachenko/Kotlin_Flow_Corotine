@@ -1,8 +1,11 @@
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import java.util.*
+
 import kotlin.collections.ArrayList
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.measureTimeMillis
+
 
 
 val words = listOf("level", "pope", "needle", "Anna", "Pete", "noon", "stats")
@@ -26,11 +29,179 @@ fun main(args: Array<String>) = runBlocking {
     //testApp07(args)
     //testApp08(args)
     //testApp09(args)
-    testApp10(args)
+    //testApp10(args)
+    //testApp11(args)
+    //testApp13(args)
+    //testApp15(args)
+    testApp16(args)
 
 
 }
 
+//Защита от многопоточности
+val contextV2 = newSingleThreadContext("counter")
+
+//val actorCounter = actor<Void?>(contextV2) {
+//    for(msg in channel) {
+//        counter++
+//    }
+//}
+suspend fun testApp17(args: Array<String>){
+
+    val workerA = asyncIncrementV3(2000)
+    val workerB = asyncIncrementV3(100)
+    workerA.await()
+    workerB.await()
+
+    print("counter [$counter]")
+}
+fun asyncIncrementV3(by: Int) = CoroutineScope(Dispatchers.Default).async {
+    for(i in 0 until by) {
+        counter++
+    }
+}
+
+
+
+
+suspend fun testApp16(args: Array<String>){
+
+    val workerA = asyncIncrementV2(2000)
+    val workerB = asyncIncrementV2(100)
+    workerA.await()
+    workerB.await()
+
+    print("counter [$counter]")
+}
+
+fun asyncIncrementV2(by: Int) = CoroutineScope(Dispatchers.Default).async(contextV2) {
+    for(i in 0 until by) {
+        counter++
+    }
+}
+
+suspend fun testApp15(args: Array<String>) {
+    val time = measureTimeMillis {
+        val channel = Channel<Int>(Channel.CONFLATED) //возвращает только последнее
+       CoroutineScope(Dispatchers.Unconfined).launch {
+            repeat(10) {
+                channel.send(it)
+                println("Sent $it")
+            }
+        }
+
+        delay(500)
+        println("Taking two")
+        println(" Recieve: ${channel.receive()}")
+        println(" Recieve: ${channel.receive()}")
+        delay(500)
+    }
+
+    println("Took ${time} ms")
+}
+
+suspend fun testApp14(args: Array<String>) {
+    val time = measureTimeMillis {
+        val channel = Channel<Int>(4)
+        val sender = CoroutineScope(Dispatchers.Unconfined).launch {
+            repeat(10) {
+                channel.send(it)
+                println("Sent $it")
+            }
+        }
+
+        delay(500)
+        println("Taking two")
+        println(" Recieve: ${channel.receive()}")
+        println(" Recieve: ${channel.receive()}")
+        delay(500)
+    }
+
+    println("Took ${time} ms")
+}
+
+
+suspend fun testApp13(args: Array<String>) {
+    val time = measureTimeMillis {
+        val channel = Channel<Int>(Channel.UNLIMITED)
+        val sender = CoroutineScope(Dispatchers.Unconfined).launch {
+            repeat(10) {
+                channel.send(it)
+                println("Sent $it")
+            }
+        }
+
+        delay(500)
+    }
+
+    println("Took ${time} ms")
+}
+
+suspend fun testApp12(args: Array<String>) {
+
+    val time = measureTimeMillis {
+        val channel = Channel<Int>()
+        val sender = CoroutineScope(Dispatchers.Unconfined).launch {
+            repeat(10) {
+                channel.send(it)
+                println("Sent $it")
+            }
+        }
+
+        channel.receive()
+        channel.receive()
+    }
+
+    println("Took ${time} ms")
+}
+
+
+suspend fun testApp11(args: Array<String>) {
+
+//    val s1 = iterator{
+//        yield("First")
+//        yield("Second")
+//        yield("Third")
+//    }
+//    println(s1.asSequence().elementAt(1))
+//    s1.forEach {
+//        print("$it ")
+//    }
+
+    val fibonacci = sequence {
+        yield(1L)
+        var current = 1L
+        var next = 1L
+        while(true) {
+            yield(next)
+            val tmpNext = current + next
+            current = next
+            next = tmpNext
+        }
+    }
+
+    val indexed = fibonacci.take(50).withIndex()
+    for ((index, value) in indexed) {
+        println("$index: $value")
+    }
+
+    val fibonacci2 = iterator {
+        yield(1L)
+        var current = 1L
+        var next = 1L
+        while(true) {
+            yield(next)
+            val tmpNext = current + next
+            current = next
+            next = tmpNext
+        }
+    }
+
+    for (i in 0..91) {
+        println("$i is ${fibonacci2.next()}")
+    }
+
+}
 
 suspend fun testApp10(args: Array<String>) {
 
